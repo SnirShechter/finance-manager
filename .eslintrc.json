@@ -1,0 +1,8 @@
+{
+  "extends": ["plugin:adonis/typescriptApp", "plugin:prettier/recommended"],
+  "plugins": ["prettier"],
+  "rules": {
+    "prettier/prettier": ["error"],
+    "@typescript-eslint/space-before-function-paren": "off"
+  }
+}
