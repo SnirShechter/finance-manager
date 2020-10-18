@@ -3,44 +3,70 @@ import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 import { CompanyTypes, createScraper, SCRAPERS } from 'israeli-bank-scrapers'
 import DataFetchingException from 'App/Exceptions/DataFetchingException'
 import FinancialDatumValidator from 'App/Validators/FinancialDatumValidator'
+import { validate } from '../../../lib/decorators/validate'
 
-const getDataFactory = (companyType: CompanyTypes, credentialsFields: string[]) => {
-  return async function (ctx: HttpContextContract) {
-    const validation = new FinancialDatumValidator(ctx, credentialsFields)
-    await ctx.request.validate(validation)
+// A generic function used to handle all routes based on the companyType and credentialsFields
+async function getData(ctx: HttpContextContract, companyType: CompanyTypes, credentialsFields: string[]) {
+  const { startDate, ...credentials } = ctx.request.only(['startDate', ...credentialsFields])
 
-    const { startDate, ...credentials } = ctx.request.only(['startDate', ...credentialsFields])
+  const sixMonthsAgo = new Date()
+  sixMonthsAgo.setMonth(new Date().getMonth() - 6)
 
-    const sixMonthsAgo = new Date()
-    sixMonthsAgo.setMonth(new Date().getMonth() - 6)
+  const scraper = createScraper({
+    showBrowser: false,
+    companyId: companyType,
+    startDate: startDate || sixMonthsAgo,
+  })
 
-    const scraper = createScraper({
-      showBrowser: false,
-      companyId: companyType,
-      startDate: startDate || sixMonthsAgo,
-    })
+  const scrapeResult = await scraper.scrape(credentials)
+  if (!scrapeResult.success || typeof scrapeResult.accounts === 'undefined') throw new DataFetchingException()
 
-    const scrapeResult = await scraper.scrape(credentials)
-
-    if (scrapeResult.success && typeof scrapeResult.accounts !== 'undefined') {
-      return scrapeResult
-    } else {
-      throw new DataFetchingException()
-    }
-  }
+  return scrapeResult.accounts
 }
+
 export default class FinancialDataController {
-  // Regular username + password fields
-  public leumi = getDataFactory(CompanyTypes.leumi, SCRAPERS.leumi.loginFields)
-  public mizrahi = getDataFactory(CompanyTypes.mizrahi, SCRAPERS.mizrahi.loginFields)
-  public otsarHahayal = getDataFactory(CompanyTypes.otsarHahayal, SCRAPERS.otsarHahayal.loginFields)
-  public visaCal = getDataFactory(CompanyTypes.visaCal, SCRAPERS.visaCal.loginFields)
-  public max = getDataFactory(CompanyTypes.max, SCRAPERS.max.loginFields)
-  public union = getDataFactory(CompanyTypes.union, SCRAPERS.union.loginFields)
-  public beinleumi = getDataFactory(CompanyTypes.beinleumi, SCRAPERS.beinleumi.loginFields)
-  // Special fields
-  public hapoalim = getDataFactory(CompanyTypes.hapoalim, SCRAPERS.hapoalim.loginFields)
-  public discount = getDataFactory(CompanyTypes.discount, SCRAPERS.discount.loginFields)
-  public isracard = getDataFactory(CompanyTypes.isracard, SCRAPERS.isracard.loginFields)
-  public amex = getDataFactory(CompanyTypes.amex, SCRAPERS.amex.loginFields)
+  @validate(FinancialDatumValidator, SCRAPERS.leumi.loginFields)
+  public async leumi(ctx: HttpContextContract) {
+    return await getData(ctx, CompanyTypes.leumi, SCRAPERS.leumi.loginFields)
+  }
+  @validate(FinancialDatumValidator, SCRAPERS.mizrahi.loginFields)
+  public async mizrahi(ctx: HttpContextContract) {
+    return await getData(ctx, CompanyTypes.mizrahi, SCRAPERS.mizrahi.loginFields)
+  }
+  @validate(FinancialDatumValidator, SCRAPERS.otsarHahayal.loginFields)
+  public async otsarHahayal(ctx: HttpContextContract) {
+    return await getData(ctx, CompanyTypes.otsarHahayal, SCRAPERS.otsarHahayal.loginFields)
+  }
+  @validate(FinancialDatumValidator, SCRAPERS.visaCal.loginFields)
+  public async visaCal(ctx: HttpContextContract) {
+    return await getData(ctx, CompanyTypes.visaCal, SCRAPERS.visaCal.loginFields)
+  }
+  @validate(FinancialDatumValidator, SCRAPERS.max.loginFields)
+  public async max(ctx: HttpContextContract) {
+    return await getData(ctx, CompanyTypes.max, SCRAPERS.max.loginFields)
+  }
+  @validate(FinancialDatumValidator, SCRAPERS.union.loginFields)
+  public async union(ctx: HttpContextContract) {
+    return await getData(ctx, CompanyTypes.union, SCRAPERS.union.loginFields)
+  }
+  @validate(FinancialDatumValidator, SCRAPERS.beinleumi.loginFields)
+  public async beinleumi(ctx: HttpContextContract) {
+    return await getData(ctx, CompanyTypes.beinleumi, SCRAPERS.beinleumi.loginFields)
+  }
+  @validate(FinancialDatumValidator, SCRAPERS.hapoalim.loginFields)
+  public async hapoalim(ctx: HttpContextContract) {
+    return await getData(ctx, CompanyTypes.hapoalim, SCRAPERS.hapoalim.loginFields)
+  }
+  @validate(FinancialDatumValidator, SCRAPERS.discount.loginFields)
+  public async discount(ctx: HttpContextContract) {
+    return await getData(ctx, CompanyTypes.discount, SCRAPERS.discount.loginFields)
+  }
+  @validate(FinancialDatumValidator, SCRAPERS.isracard.loginFields)
+  public async isracard(ctx: HttpContextContract) {
+    return await getData(ctx, CompanyTypes.isracard, SCRAPERS.isracard.loginFields)
+  }
+  @validate(FinancialDatumValidator, SCRAPERS.amex.loginFields)
+  public async amex(ctx: HttpContextContract) {
+    return await getData(ctx, CompanyTypes.amex, SCRAPERS.amex.loginFields)
+  }
 }

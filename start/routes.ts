@@ -24,6 +24,8 @@ Route.get('/', async () => {
   return { hello: 'world' }
 })
 
+Route.get('/demo', 'AuthController.demo')
+
 Route.group(() => {
   Route.post('/register', 'AuthController.register')
   Route.post('/login', 'AuthController.login')
@@ -43,3 +45,10 @@ Route.group(() => {
   Route.post('/mizrahi', 'FinancialDataController.mizrahi')
   Route.post('/leumi', 'FinancialDataController.leumi')
 }).prefix('data')
+
+Route.group(() => {
+  Route.post('/categories', 'TransactionClassifiersController.addCategory')
+  Route.get('/categories', 'TransactionClassifiersController.getAllCategories')
+  Route.post('/identifiers', 'TransactionClassifiersController.addIdentifier')
+  Route.get('/identifiers', 'TransactionClassifiersController.getAllIdentifiers')
+}).prefix('classify')
